@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaza — The Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0c;
+    --paper: #f5f2ec;
+    --muted: #6b6860;
+    --faint: #e0dcd4;
+    --accent: #c0392b;
+    --accent-dim: rgba(192,57,43,0.12);
+    --teal: #1a7a5e;
+    --teal-dim: rgba(26,122,94,0.12);
+    --serif: 'Playfair Display', Georgia, serif;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--paper);
+    border-bottom: 1px solid var(--faint);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  nav .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  nav .nav-links {
+    display: flex; gap: 2rem;
+    list-style: none;
+  }
+  nav .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav .nav-links a:hover { color: var(--ink); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+    border-bottom: 1px solid var(--faint);
+    overflow: hidden;
+  }
+  .hero-bg-number {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--serif);
+    font-size: clamp(160px, 30vw, 400px);
+    font-weight: 900;
+    color: rgba(192,57,43,0.05);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+  .hero-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.2s;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(48px, 8vw, 120px);
+    font-weight: 900;
+    line-height: 0.95;
+    max-width: 900px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.4s;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    margin-top: 2rem;
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.6;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.6s;
+  }
+  .hero-meta {
+    margin-top: 3rem;
+    display: flex; gap: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards 0.8s;
+  }
+  .hero-meta-item .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .hero-meta-item .value {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .scroll-hint {
+    position: absolute; bottom: 2rem; right: 2rem;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    writing-mode: vertical-rl;
+    opacity: 0;
+    animation: fadeIn 1s ease forwards 1.2s;
+  }
+
+  /* SECTIONS */
+  section {
+    padding: 6rem 2rem;
+    border-bottom: 1px solid var(--faint);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .section-number {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 3rem;
+  }
+  .section-title em { font-style: italic; color: var(--accent); }
+
+  /* STAT GRID */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--faint);
+    border: 1px solid var(--faint);
+    margin-bottom: 3rem;
+  }
+  .stat-cell {
+    background: var(--paper);
+    padding: 1.5rem;
+  }
+  .stat-cell .s-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .stat-cell .s-value {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-cell .s-value.red { color: var(--accent); }
+  .stat-cell .s-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-family: var(--mono);
+  }
+
+  /* CHART WRAPPERS */
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    margin-bottom: 2rem;
+  }
+  .chart-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .chart-source {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* BAR ROWS */
+  .bar-row { margin-bottom: 14px; }
+  .bar-row-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .bar-track {
+    height: 8px;
+    background: var(--faint);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* COMPARISON TABLE */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .compare-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid var(--faint);
+  }
+  .compare-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--faint);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .compare-table tr:hover td { background: rgba(0,0,0,0.02); }
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+  .tag.yes { background: var(--teal-dim); color: var(--teal); }
+  .tag.no { background: var(--accent-dim); color: var(--accent); }
+  .tag.partial { background: rgba(180,140,20,0.12); color: #7a5f00; }
+
+  /* LESSONS */
+  .lesson-card {
+    border-left: 2px solid var(--faint);
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .lesson-card:hover { border-color: var(--accent); }
+  .lesson-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+  }
+  .lesson-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .lesson-col-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .lesson-col-label.s { color: var(--teal); }
+  .lesson-col-label.g { color: var(--accent); }
+  .lesson-col-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* SURVEY */
+  .survey-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  .survey-item {}
+  .survey-question {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+
+  /* TIMELINE */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 2rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 1px;
+    background: var(--faint);
+  }
+  .timeline-item {
+    position: relative;
+    padding: 0 0 2rem 1.5rem;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute; left: -2rem; top: 8px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translateX(-2px);
+  }
+  .timeline-year {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .timeline-event {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  .timeline-detail {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  /* FOOTER */
+  footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  footer .f-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  footer .f-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* DIVIDER */
+  .rule {
+    border: none;
+    border-top: 1px solid var(--faint);
+    margin: 2.5rem 0;
+  }
+
+  /* PULL QUOTE */
+  .pull-quote {
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 20px;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  @media (max-width: 640px) {
+    .survey-grid { grid-template-columns: 1fr; }
+    .lesson-cols { grid-template-columns: 1fr; }
+    nav .nav-links { display: none; }
+    .hero-meta { flex-wrap: wrap; gap: 1.5rem; }
+    .compare-table td:last-child { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">Gaza — The Data</span>
+  <ul class="nav-links">
+    <li><a href="#casualties">Casualties</a></li>
+    <li><a href="#destruction">Destruction</a></li>
+    <li><a href="#survey">Survey</a></li>
+    <li><a href="#sarajevo">Sarajevo</a></li>
+    <li><a href="#sources">Sources</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="hero-bg-number">73,188</div>
+  <div class="hero-label">Research data — March 2026</div>
+  <h1>Gaza —<br><em>The Numbers</em><br>Behind the War</h1>
+  <p class="hero-sub">A data-driven record of the ongoing conflict in Gaza Strip, drawing on primary research, UN reports, and the latest figures available as of March 15, 2026.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <div class="label">Confirmed killed</div>
+      <div class="value">73,188+</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Displaced</div>
+      <div class="value">1.9M</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Days of conflict</div>
+      <div class="value" id="dayCount">—</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Children killed</div>
+      <div class="value">20,000+</div>
+    </div>
+  </div>
+  <span class="scroll-hint">Scroll to explore</span>
+</div>
+
+<!-- SECTION 1: CASUALTIES -->
+<section id="casualties">
+  <div class="section-number reveal">01 / Casualties</div>
+  <h2 class="section-title reveal">The <em>human</em><br>cost</h2>
+
+  <div class="stat-grid reveal">
+    <div class="stat-cell">
+      <div class="s-label">Confirmed killed (Gaza MoH)</div>
+      <div class="s-value red">73,188+</div>
+      <div class="s-sub">As of March 2026</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Lancet estimate (violent deaths)</div>
+      <div class="s-value red">75,200+</div>
+      <div class="s-sub">Feb 2026</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">MPIDR estimate incl. indirect</div>
+      <div class="s-value red">100,000+</div>
+      <div class="s-sub">Max Planck Institute, Oct 2025</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Lancet upper estimate (total excess)</div>
+      <div class="s-value red">186,000+</div>
+      <div class="s-sub">Includes disease, malnutrition</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Children killed</div>
+      <div class="s-value">20,000+</div>
+      <div class="s-sub">~30% of confirmed deaths</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Journalists killed</div>
+      <div class="s-value">254</div>
+      <div class="s-sub">CPJ / RSF</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">UNRWA staff killed</div>
+      <div class="s-value">382</div>
+      <div class="s-sub">Largest recorded loss for a UN agency</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Wounded</div>
+      <div class="s-value">166,000+</div>
+      <div class="s-sub">Many with permanent disability</div>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <div class="chart-label">Reported death toll — Oct 2023 to Mar 2026 (MoH figures)</div>
+    <div class="chart-wrap" style="height:280px;">
+      <canvas id="tollChart"></canvas>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Life expectancy collapse (Max Planck Institute for Demographic Research)</div>
+    <div class="chart-wrap" style="height:180px;">
+      <canvas id="lifeChart"></canvas>
+    </div>
+    <div class="chart-source">Source: MPIDR, 2025 — A 44–47% collapse in a single year.</div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Who was killed — demographic breakdown</div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Children (~30%)</span><span>20,000+</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="30"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Women (~26%)</span><span>~19,000</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#993c1d;" data-w="26"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Aid seekers killed at food distribution points</span><span>2,610+</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#6b6860;" data-w="18"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Medical personnel killed</span><span>1,400+</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#6b6860;" data-w="12"></div></div>
+    </div>
+  </div>
+
+  <div class="pull-quote reveal">"The total number of deaths is likely to be much higher than that reported." — The Lancet, February 2026</div>
+</section>
+
+<!-- SECTION 2: DESTRUCTION -->
+<section id="destruction">
+  <div class="section-number reveal">02 / Destruction</div>
+  <h2 class="section-title reveal">Built environment<br><em>erased</em></h2>
+
+  <div class="reveal">
+    <div class="chart-label">Infrastructure destruction — percentage damaged or destroyed</div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Housing stock</span><span>92%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="92"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>All structures</span><span>70%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="70"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Schools damaged or destroyed</span><span>97.5%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="97.5"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Mosques destroyed (340+)</span><span>60%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#993c1d;" data-w="60"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Cultural and heritage sites</span><span>200+ sites</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#993c1d;" data-w="55"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Agricultural land destroyed or inaccessible</span><span>~80%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#6b6860;" data-w="80"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Population below poverty line</span><span>100%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#6b6860;" data-w="100"></div></div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Healthcare system — pre-war vs currently functional</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#1a7a5e;"></div>Pre-war</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent);"></div>Currently functional</div>
+    </div>
+    <div class="chart-wrap" style="height:220px;">
+      <canvas id="healthChart"></canvas>
+    </div>
+    <div class="chart-source">Source: WHO, UNRWA, OCHA — March 2026.</div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Economy in freefall</div>
+    <div class="stat-grid" style="margin-bottom:1rem;">
+      <div class="stat-cell">
+        <div class="s-label">Unemployment</div>
+        <div class="s-value red">80%</div>
+        <div class="s-sub">Was 49% pre-war</div>
+      </div>
+      <div class="stat-cell">
+        <div class="s-label">Inflation</div>
+        <div class="s-value red">240%</div>
+        <div class="s-sub">Due to blockade</div>
+      </div>
+      <div class="stat-cell">
+        <div class="s-label">GDP per capita</div>
+        <div class="s-value red">$161</div>
+        <div class="s-sub">Entire population below poverty line</div>
+      </div>
+      <div class="stat-cell">
+        <div class="s-label">Children out of school</div>
+        <div class="s-value red">637,000</div>
+        <div class="s-sub">UNICEF, 2025</div>
+      </div>
+    </div>
+    <div class="chart-source">Sources: UNCTAD, UNICEF, World Bank — 2025–2026.</div>
+  </div>
+
+  <div class="pull-quote reveal">"Gaza needs 350 years to clear the rubble — if reconstruction started today." — UN Environment Programme, 2024</div>
+</section>
+
+<!-- SECTION 3: HISTORICAL TIMELINE -->
+<section id="timeline">
+  <div class="section-number reveal">03 / History</div>
+  <h2 class="section-title reveal">A conflict<br><em>in cycles</em></h2>
+  <p class="reveal" style="color:var(--muted);max-width:540px;margin-bottom:2.5rem;font-size:15px;">Every escalation has left Gaza further behind. Each operation built on the destruction of the last.</p>
+
+  <div class="timeline reveal">
+    <div class="timeline-item">
+      <div class="timeline-year">Summer 2006</div>
+      <div class="timeline-event">Operation Summer Rains + Autumn Clouds</div>
+      <div class="timeline-detail">Gaza Beach attack — 8 civilians killed. 4-month operation followed by 1-week operation.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2008–2009</div>
+      <div class="timeline-event">Operation Cast Lead</div>
+      <div class="timeline-detail">1,400+ Palestinians killed. White phosphorus used on civilian areas. First ground invasion since 2005.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2012</div>
+      <div class="timeline-event">Operation Pillar of Defense</div>
+      <div class="timeline-detail">158 Palestinians killed across two operations.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2014</div>
+      <div class="timeline-event">Operation Protective Edge</div>
+      <div class="timeline-detail">2,200+ killed, 10,000+ injured. 18,000 homes destroyed. Battle of Shuja'iyya — 120 killed in a single neighbourhood. Rubble: 2.5 million tonnes.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2018–2021</div>
+      <div class="timeline-event">Great March of Return + Operation Guardian of the Walls</div>
+      <div class="timeline-detail">223 killed in border protests. 8,000+ with live-ammunition disabilities. 1,042 housing units destroyed in May 2021 alone. Samir Mansour bookstore — 100,000 books destroyed.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">Oct 2023 — Present</div>
+      <div class="timeline-event">Current conflict</div>
+      <div class="timeline-detail">73,188+ confirmed killed. 90% of population displaced. 92% of housing damaged or destroyed. Ongoing as of March 2026.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: SURVEY -->
+<section id="survey">
+  <div class="section-number reveal">04 / Primary Research</div>
+  <h2 class="section-title reveal">What residents<br><em>said</em></h2>
+  <p class="reveal" style="color:var(--muted);max-width:540px;margin-bottom:2.5rem;font-size:15px;">Survey of 39 participants at the Islamic University of Gaza. Master's research, American University of Sharjah, 2023–24.</p>
+
+  <div class="stat-grid reveal">
+    <div class="stat-cell">
+      <div class="s-label">Directly affected by the conflict</div>
+      <div class="s-value red">61.5%</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Daily life severely impacted</div>
+      <div class="s-value red">100%</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Noticed infrastructure damage</div>
+      <div class="s-value">84.6%</div>
+    </div>
+    <div class="stat-cell">
+      <div class="s-label">Believe urban planning can mitigate impact</div>
+      <div class="s-value">97.4%</div>
+    </div>
+  </div>
+
+  <div class="survey-grid reveal">
+    <div class="survey-item">
+      <div class="survey-question">Do municipalities consider the impact of conflict?</div>
+      <div class="bar-row">
+        <div class="bar-row-header"><span>Yes</span><span>53.8%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--teal);" data-w="53.8"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-header"><span>No</span><span>38.5%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="38.5"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-header"><span>Don't know</span><span>7.7%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--muted);" data-w="7.7"></div></div>
+      </div>
+    </div>
+    <div class="survey-item">
+      <div class="survey-question">Do decision-makers consider residents' needs?</div>
+      <div class="bar-row">
+        <div class="bar-row-header"><span>No</span><span>61.5%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="61.5"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-row-header"><span>Yes</span><span>38.5%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--teal);" data-w="38.5"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pull-quote reveal">"0 of 39 respondents could name a single positive urban planning initiative in their area."</div>
+
+  <div class="reveal">
+    <div class="chart-label">Selected voices from the survey (translated from Arabic)</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:1rem;">
+      <div style="border-left:2px solid var(--faint);padding:0.8rem 1.2rem;">
+        <div style="font-size:14px;color:var(--ink);line-height:1.6;">"Our house was bombed several months ago, and we were all displaced, the family was separated. It made life difficult."</div>
+      </div>
+      <div style="border-left:2px solid var(--faint);padding:0.8rem 1.2rem;">
+        <div style="font-size:14px;color:var(--ink);line-height:1.6;">"The bombings take society back decades. It destroyed what was modernized in the area."</div>
+      </div>
+      <div style="border-left:2px solid var(--faint);padding:0.8rem 1.2rem;">
+        <div style="font-size:14px;color:var(--ink);line-height:1.6;">"Before planning and making any decision, review and satisfy the needs of the affected."</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: 2014 COMPARISON -->
+<section>
+  <div class="section-number reveal">05 / 2014 War</div>
+  <h2 class="section-title reveal">Operation Protective Edge —<br><em>the numbers</em></h2>
+
+  <div class="reveal">
+    <div class="chart-label">Casualties and destruction — Gaza vs Israel, 2014</div>
+    <div class="chart-wrap" style="height:300px;">
+      <canvas id="warChart"></canvas>
+    </div>
+    <div class="legend" style="margin-top:8px;">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent);"></div>Gaza</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--muted);"></div>Israel</div>
+    </div>
+    <div class="chart-source">Source: UN OCHA 2014, cited in Al Farra, AUS research 2023–24.</div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Selected ratios</div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Civilians killed — Gaza:Israel ratio 270:1</span><span>1,600 vs 6</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="99"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Children killed — 550:1</span><span>550 vs 1</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--accent);" data-w="99.5"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Medical facilities — 73:0</span><span>73 vs 0</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#993c1d;" data-w="100"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-row-header"><span>Homes severely damaged or destroyed — 18,000:1</span><span>18,000 vs 1</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:#993c1d;" data-w="99.9"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: SARAJEVO -->
+<section id="sarajevo">
+  <div class="section-number reveal">06 / Comparison</div>
+  <h2 class="section-title reveal">Sarajevo &<br><em>Gaza</em></h2>
+  <p class="reveal" style="color:var(--muted);max-width:580px;margin-bottom:2.5rem;font-size:15px;">Sarajevo (1992–1995) is the closest comparable urban siege in modern history. Its recovery offers lessons — but also reveals the structural barriers Gaza faces that Sarajevo did not.</p>
+
+  <div class="reveal">
+    <div class="chart-label">Conflict scale — side by side</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#534AB7;"></div>Sarajevo siege (1992–1995)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent);"></div>Gaza (Oct 2023–present)</div>
+    </div>
+    <div class="chart-wrap" style="height:280px;">
+      <canvas id="compareChart"></canvas>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Recovery conditions — what Sarajevo had that Gaza does not</div>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Condition</th>
+          <th>Sarajevo</th>
+          <th>Gaza</th>
+        </tr>
+      </thead>
+      <tbody id="recoveryTableBody"></tbody>
+    </table>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Projected reconstruction timeline — years from ceasefire</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#534AB7;"></div>Sarajevo (actual)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent);"></div>Gaza (projected)</div>
+    </div>
+    <div class="chart-wrap" style="height:220px;">
+      <canvas id="timelineChart"></canvas>
+    </div>
+    <div class="chart-source">Sarajevo figures: UNHCR 2005, Aleppo Project. Gaza projections: UNEP 2024, UNCTAD.</div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="reveal">
+    <div class="chart-label">Five lessons from Sarajevo</div>
+    <div id="lessonsContainer"></div>
+  </div>
+</section>
+
+<!-- SOURCES -->
+<section id="sources">
+  <div class="section-number reveal">07 / Sources</div>
+  <h2 class="section-title reveal"><em>Data</em><br>sources</h2>
+  <div class="reveal" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.1em;margin-bottom:8px;">Primary Research</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;">Al Farra, Ahmed. The Impacts of Urban Warfare on Urban Planning in Gaza Strip. AUS, 2023–24.<br>Survey of 39 participants, Islamic University of Gaza.</div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.1em;margin-bottom:8px;">UN Agencies</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;">OCHA, UNRWA, UNICEF, WHO, UNEP, UN Habitat — 2024–2026 reports.</div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.1em;margin-bottom:8px;">Academic</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;">The Lancet Global Health, Feb 2026.<br>Max Planck Institute for Demographic Research, Oct 2025.<br>PCBS 2017, 2020.</div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.1em;margin-bottom:8px;">Other</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;">UNCTAD, World Bank, Human Rights Watch, B'Tselem, CPJ, RSF, IMEU.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>
+    <div class="f-title">Gaza — The Data</div>
+    <div class="f-sub">
+      Based on research by Ahmed Al Farra, AUS 2023–24<br>
+      Updated with latest reports as of March 15, 2026<br>
+      All figures sourced from referenced organisations above
+    </div>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;">
+    Data as of<br>15 March 2026
+  </div>
+</footer>
+
+<script>
+// Day counter
+const start = new Date('2023-10-07');
+const today = new Date('2026-03-15');
+const days = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+document.getElementById('dayCount').textContent = days.toLocaleString();
+
+// Scroll reveal
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(r => obs.observe(r));
+
+// Bar animations
+const barFills = document.querySelectorAll('.bar-fill[data-w]');
+const barObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.width = e.target.dataset.w + '%';
+      barObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+barFills.forEach(b => barObs.observe(b));
+
+// Chart defaults
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.color = '#6b6860';
+
+// Death toll chart
+new Chart(document.getElementById('tollChart'), {
+  type: 'line',
+  data: {
+    labels: ['Oct 23','Dec 23','Feb 24','Apr 24','Jun 24','Aug 24','Oct 24','Dec 24','Feb 25','Apr 25','Jun 25','Aug 25','Oct 25','Dec 25','Feb 26'],
+    datasets: [{
+      data: [3000,20000,28000,34000,38000,41000,44000,46000,48000,52000,57000,62000,66000,71000,73000],
+      borderColor: '#c0392b',
+      backgroundColor: 'rgba(192,57,43,0.06)',
+      fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 10 }, maxRotation: 30 }, grid: { color: 'rgba(0,0,0,0.04)' } },
+      y: { ticks: { font: { size: 10 }, callback: v => (v/1000).toFixed(0)+'k' }, grid: { color: 'rgba(0,0,0,0.04)' } }
+    }
+  }
+});
+
+// Life expectancy
+new Chart(document.getElementById('lifeChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Pre-war baseline','2023 (year 1)','2024 (year 2)'],
+    datasets: [{
+      data: [74, 41, 39],
+      backgroundColor: ['#1a7a5e','#c0392b','#8b1a1a'],
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+      y: { min: 0, max: 80, ticks: { font: { size: 10 }, callback: v => v+' yrs' }, grid: { color: 'rgba(0,0,0,0.04)' } }
+    }
+  }
+});
+
+// Healthcare
+new Chart(document.getElementById('healthChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Hospitals','Primary health centres','UNRWA clinics','Reconstructive surgeons'],
+    datasets: [
+      { label: 'Pre-war', data: [36,181,22,8], backgroundColor: '#1a7a5e', borderRadius: 3 },
+      { label: 'Functional now', data: [14,63,4,0], backgroundColor: '#c0392b', borderRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+    }
+  }
+});
+
+// 2014 war
+new Chart(document.getElementById('warChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Civilians killed','Children killed','Homes destroyed','Houses of worship','Kindergartens','Medical facilities'],
+    datasets: [
+      { label: 'Gaza', data: [1600,550,18000,203,285,73], backgroundColor: '#c0392b', borderRadius: 3 },
+      { label: 'Israel', data: [6,1,1,2,1,0], backgroundColor: '#6b6860', borderRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 10 }, maxRotation: 20 }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+    }
+  }
+});
+
+// Sarajevo comparison
+new Chart(document.getElementById('compareChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Civilians killed','Buildings destroyed (%)','Utilities disabled (%)','Displaced (% pop)','Duration (months)'],
+    datasets: [
+      { label: 'Sarajevo', data: [11000,60,80,40,44], backgroundColor: '#534AB7', borderRadius: 3 },
+      { label: 'Gaza', data: [73000,92,95,90,17], backgroundColor: '#c0392b', borderRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 10 }, maxRotation: 20 }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+    }
+  }
+});
+
+// Recovery timeline
+new Chart(document.getElementById('timelineChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Infrastructure','Hospitals','Schools','Economy','Full reconstruction'],
+    datasets: [
+      { label: 'Sarajevo (yrs)', data: [2,3,2,10,25], backgroundColor: '#534AB7', borderRadius: 3 },
+      { label: 'Gaza (projected yrs)', data: [10,15,8,25,40], backgroundColor: '#c0392b', borderRadius: 3 }
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.x + ' years' } }
+    },
+    scales: {
+      x: { ticks: { font: { size: 10 }, callback: v => v+'yr' }, grid: { color: 'rgba(0,0,0,0.04)' } },
+      y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+    }
+  }
+});
+
+// Recovery table
+const recoveryData = [
+  { factor: 'Ceasefire and end of hostilities', sarajevo: 'yes', gaza: 'no' },
+  { factor: 'International aid access (World Bank, EU, USAID)', sarajevo: 'yes', gaza: 'no' },
+  { factor: 'Political sovereignty', sarajevo: 'yes', gaza: 'no' },
+  { factor: 'No ongoing blockade', sarajevo: 'yes', gaza: 'no' },
+  { factor: 'Community involvement in rebuilding', sarajevo: 'yes', gaza: 'yes' },
+  { factor: 'Cultural identity preserved', sarajevo: 'yes', gaza: 'partial' },
+  { factor: 'Functional government', sarajevo: 'yes', gaza: 'partial' },
+  { factor: 'Healthcare system operational', sarajevo: 'yes', gaza: 'no' },
+];
+const tagMap = { yes: 'Yes', no: 'No', partial: 'Partial' };
+const tbody = document.getElementById('recoveryTableBody');
+recoveryData.forEach(r => {
+  const gClass = r.gaza === 'yes' ? 'yes' : r.gaza === 'partial' ? 'partial' : 'no';
+  tbody.innerHTML += `<tr>
+    <td style="font-size:13px;">${r.factor}</td>
+    <td><span class="tag yes">${tagMap[r.sarajevo]}</span></td>
+    <td><span class="tag ${gClass}">${tagMap[r.gaza]}</span></td>
+  </tr>`;
+});
+
+// Lessons
+const lessons = [
+  { title: 'Community involvement', s: 'Residents actively shaped rebuilding priorities — this gave projects legitimacy and ensured local needs were met.', g: '61.5% of survey respondents feel their needs are not considered. Communities are excluded from decisions.' },
+  { title: 'Cultural heritage preservation', s: 'Physical restoration of heritage largely succeeded, though ethnic divisions created new cultural fractures.', g: '200+ cultural sites destroyed, 340+ mosques. Heritage preservation impossible during active conflict.' },
+  { title: 'Holistic recovery — social, economic, physical', s: 'Physical-first approach led to persistent poverty and corruption. The lesson: recovery must be integrated.', g: 'Full holistic recovery is structurally impossible without political resolution and lifting of blockade.' },
+  { title: 'International coordination', s: 'Strong framework: Dayton Accords, World Bank, EU, USAID. Provided governance structure for reconstruction.', g: 'UNRWA operations severely restricted since early 2025. Humanitarian access blocked or limited.' },
+  { title: 'Anti-corruption and governance', s: 'A persisting problem 30 years post-war — governance failures slowed and distorted reconstruction.', g: 'Reconstruction cannot begin under active conflict. Governance structures remain unresolved.' },
+];
+const lc = document.getElementById('lessonsContainer');
+lessons.forEach(l => {
+  lc.innerHTML += `<div class="lesson-card">
+    <div class="lesson-title">${l.title}</div>
+    <div class="lesson-cols">
+      <div>
+        <div class="lesson-col-label s">Sarajevo</div>
+        <div class="lesson-col-text">${l.s}</div>
+      </div>
+      <div>
+        <div class="lesson-col-label g">Gaza</div>
+        <div class="lesson-col-text">${l.g}</div>
+      </div>
+    </div>
+  </div>`;
+});
+</script>
+</body>
+</html>
